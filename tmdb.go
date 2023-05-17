@@ -51,6 +51,8 @@ var baseURL = defaultBaseURL
 type Client struct {
 	// TMDb apiKey to use the client.
 	apiKey string
+	// TMDb read access token (v4 auth)
+	accessToken string
 	// sessionId to use the client.
 	sessionID string
 	// Auto retry flag to indicates if the client
@@ -72,6 +74,16 @@ func Init(apiKey string) (*Client, error) {
 		return nil, errors.New("api key is empty")
 	}
 	return &Client{apiKey: apiKey}, nil
+}
+
+// InitWithAccessToken setups the Client with an accessToken.
+func InitWithAccessToken(accessToken string) (*Client, error) {
+	if accessToken == "" {
+		return nil, errors.New("access token is empty")
+	}
+	return &Client{
+		accessToken: accessToken,
+	}, nil
 }
 
 // SetSessionID will set the session id.
@@ -130,6 +142,9 @@ func (c *Client) get(url string, data interface{}) error {
 	defer cancel()
 	req = req.WithContext(ctx)
 	req.Header.Add("content-type", "application/json;charset=utf-8")
+	if c.accessToken != "" {
+		req.Header.Add("Authorization", "Bearer "+c.accessToken)
+	}
 	for {
 		res, err := c.http.Do(req)
 		if err != nil {
